@@ -11,12 +11,12 @@ namespace CRC32
         static IntPtr allocLoc;
         static readonly byte[] crcCheckCode = new byte[]
         {
-            0x55,                                           //push rbp
-            0x48, 0x89, 0xe5,                               //mov rbp, rsp,
+
+            0x51,                                           //push rcx
             0x48, 0x8b, 0x49, 0x09,                         //mov rcx, [rcx+9]
             0xf2, 0x48, 0x0f, 0x38, 0xf1, 0xc1,             //crc32 rax, rcx
-            0x48, 0x89, 0xec,                               //mov rsp, rbp
-            0x5d,                                           //pop rbp
+            0x59,                                           //pop rcx
+
             0xc3                                            //ret
         };
         static void Main()
