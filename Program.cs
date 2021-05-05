@@ -7,7 +7,7 @@ namespace CRC32
 {
     class Program : NativeMethods
     {
-        delegate uint TestDelegate(IntPtr isDebuggerPresentAddr);
+        delegate int TestDelegate(IntPtr isDebuggerPresentAddr);
         static IntPtr allocLoc;
         static readonly byte[] crcCheckCode = new byte[]
         {
@@ -18,6 +18,9 @@ namespace CRC32
         };
         static void Main()
         {
+
+
+
             allocLoc = Memoryapi.VirtualAlloc(IntPtr.Zero, (uint)crcCheckCode.Length, Winnt.AllocationType.MEM_COMMIT, Winnt.MemoryProtection.PAGE_EXECUTE_READWRITE);
             if (allocLoc == IntPtr.Zero)
                 throw new Exception($"Failed on VirtualAlloc with System Error Code {Marshal.GetLastWin32Error()}");
@@ -26,17 +29,34 @@ namespace CRC32
                 throw new Exception($"Failed on WriteProcessMemory with System Error Code {Marshal.GetLastWin32Error()}");
 
             Console.WriteLine($"CRC32 created at address {allocLoc.ToString("X")}");
-            Console.ReadLine();
+            //Console.ReadLine();
             
             IntPtr hKernelbase = Libloaderapi.GetModuleHandleA("KERNELBASE.dll");
             IntPtr isDebuggerPresentAddr = Libloaderapi.GetProcAddress(hKernelbase, "IsDebuggerPresent");
 
 
-            Console.WriteLine($"IsDebuggerPresent Addresss = {isDebuggerPresentAddr.ToString("X")}\n");
+            
+            while (true)
+            {
+                int c = 1;
+                long crcCheck = CRC32.AccumulateAtAddress(isDebuggerPresentAddr, 16);
+                int crcVal = 0;
+                if (crcCheck != long.MaxValue)
+                {
+                    crcVal = (int)crcCheck;
+                }
+                else
+                {
+                    crcVal = -1;
+                }
+                Console.WriteLine($"{c}: {crcVal} (IDP: {isDebuggerPresentAddr.ToString("X")}");
+                Console.ReadLine();
+
+            };
 
        
             //param passed to RCX
-            CRC32Check_Test(isDebuggerPresentAddr);
+            uint checkMe = (uint)CRC32Check_Test(isDebuggerPresentAddr);
 
             while (true)
             {
@@ -47,12 +67,12 @@ namespace CRC32
                 }
 
 
-                CRC32Check_Test(isDebuggerPresentAddr);
-
+                int crcCheck = CRC32Check_Test(isDebuggerPresentAddr);
+                int lolcheckme = 5;
             }
         }
         
-        public static uint CRC32Check_Test(IntPtr startAddr) => 
-            ((TestDelegate)Marshal.GetDelegateForFunctionPointer(allocLoc, typeof(TestDelegate))).Invoke(startAddr);
+        public static int CRC32Check_Test(IntPtr startAddr) => 
+            ((TestDelegate)Marshal.GetDelegateForFunctionPointer(allocLoc, typeof(TestDelegate)))(startAddr);
     }
 }

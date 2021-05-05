@@ -26,12 +26,15 @@ namespace CRC32
             public static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
             
             [DllImport("Kernel32", SetLastError = true)]
-            public static extern bool GetExitCodeThread(IntPtr hThread, out uint lpExitCode);
+            public static extern bool GetExitCodeProcess(IntPtr hProcess, out IntPtr lpExitCode);
         }
         protected static class Memoryapi
         {
             [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
             public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, Winnt.AllocationType flAllocationType, Winnt.MemoryProtection flProtect);
+
+            [DllImport("kernel32.dll", SetLastError = true)]
+            public static extern bool VirtualFree(IntPtr lpAddress, int size, int dwFreeType);
 
             [DllImport("kernel32.dll", SetLastError = true)]
             public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
