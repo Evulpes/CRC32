@@ -47,7 +47,7 @@ namespace CRC32
                         0x48, 0x83, 0xc1, 0x08, //add rcx, 8
                         0x49, 0xff, 0xc9,       //dec r9
                         0x49, 0x83, 0xf9, 0x00, //cmp r9, 0
-                        0x75, 0xea              //jne -0x17
+                        0x75, 0xea              //jne -0x14
                         
                     }
                 );
