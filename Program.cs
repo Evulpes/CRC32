@@ -12,11 +12,11 @@ namespace CRC32
         static readonly byte[] crcCheckCode = new byte[]
         {
 
-            0x51,                                           //push rcx
-            0x48, 0x31, 0xc0,                               //xor rax, rax
-            0x48, 0x8b, 0x49, 0x09,                         //mov rcx, [rcx+9]
+            //0x51,                                           //push rcx
+            //0x48, 0x31, 0xc0,                               //xor rax, rax
+            0x48, 0x8b, 0x49, 0x09,                         //mov rcx, [rcx+8]
             0xf2, 0x48, 0x0f, 0x38, 0xf1, 0xc1,             //crc32 rax, rcx
-            0x59,                                           //pop rcx
+            //0x59,                                           //pop rcx
 
             0xc3                                            //ret
         };
