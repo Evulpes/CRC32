@@ -11,6 +11,7 @@ namespace CRC32
         {
             [DllImport("kernel32", CharSet = CharSet.Ansi)]
             public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+
             [DllImport("kernel32", SetLastError = true)]
             public static extern IntPtr GetModuleHandleA(string lpModuleName);
         }
@@ -23,6 +24,7 @@ namespace CRC32
         {
             [DllImport("kernel32", SetLastError = true)]
             public static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
+            
             [DllImport("Kernel32", SetLastError = true)]
             public static extern bool GetExitCodeThread(IntPtr hThread, out uint lpExitCode);
         }
