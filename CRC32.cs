@@ -8,10 +8,10 @@ namespace CRC32
     {
         delegate int crcFunctionDelegate(IntPtr addr, int size);
 
-        public static long AccumulateAtAddress(IntPtr address, uint crcSize=8)
+        public static int AccumulateAtAddress(IntPtr address, uint crcSize=8)
         {
-            if (crcSize < 8)
-                return long.MaxValue;
+            if (crcSize < 8 || (crcSize % 8) != 0)
+                throw new NotImplementedException();
 
             int eightRemain = (int)crcSize % 8;
             int eightMultiple = (int)crcSize / 8;

@@ -39,16 +39,8 @@ namespace CRC32
             while (true)
             {
                 int c = 1;
-                long crcCheck = CRC32.AccumulateAtAddress(isDebuggerPresentAddr, 16);
-                int crcVal = 0;
-                if (crcCheck != long.MaxValue)
-                {
-                    crcVal = (int)crcCheck;
-                }
-                else
-                {
-                    crcVal = -1;
-                }
+                int crcVal = CRC32.AccumulateAtAddress(isDebuggerPresentAddr, 16);
+              
                 Console.WriteLine($"{c}: {crcVal} (IDP: {isDebuggerPresentAddr.ToString("X")}");
                 Console.ReadLine();
 
