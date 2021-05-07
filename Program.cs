@@ -23,8 +23,9 @@ namespace CRC32
                     Console.WriteLine($"{c}: CRC Check Failed for {isDebuggerPresentAddr}. Error Codes: {crcVal} (LastError: {Marshal.GetLastWin32Error()}");
                 
                 Console.WriteLine($"{c}: {crcValue} (IDP: {isDebuggerPresentAddr:X})");
-                Console.ReadLine();
+                //Console.ReadLine();
                 c++;
+                Thread.Sleep(10);
             };
 
             //Free ModuleHandle.

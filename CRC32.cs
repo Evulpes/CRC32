@@ -116,6 +116,7 @@ namespace CRC32
             byte[] assembly = crcInstructions.ToArray();
 
             IntPtr allocLoc = Memoryapi.VirtualAlloc(IntPtr.Zero, (uint)assembly.Length, Winnt.AllocationType.MEM_COMMIT, Winnt.MemoryProtection.PAGE_EXECUTE_READWRITE);
+            
             try
             {
                 Memoryapi.WriteProcessMemory(Process.GetCurrentProcess().Handle, allocLoc, assembly, assembly.Length, out IntPtr _);
@@ -127,7 +128,7 @@ namespace CRC32
 
 #if DEBUG
             Console.WriteLine($"CRC Check Location: {allocLoc:X}");
-            Console.Read();
+            //Console.Read();
 #endif
             crcValue = ((crcFunctionDelegate)Marshal.GetDelegateForFunctionPointer
             (
@@ -148,8 +149,8 @@ namespace CRC32
             //Zero the memory out, as VirtualFree doesn't guarantee this.
             Wdm.ZeroMemory(allocLoc, (IntPtr)assembly.Length);
 
-            if(!Memoryapi.VirtualFree(allocLoc, 0, 0x00004000))
-                return ErrorCodes.VIRTUALFREE_FAILED; //MEM_DECOMMIT - LAZY! fix.
+            if(!Memoryapi.VirtualFree(allocLoc, 0, 0x00008000))
+                return ErrorCodes.VIRTUALFREE_FAILED; //MEM_RELEASE - LAZY! fix.
 
             return ErrorCodes.NO_ERROR;
         }
