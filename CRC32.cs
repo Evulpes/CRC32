@@ -9,8 +9,9 @@ namespace CRC32
     {
         delegate int crcFunctionDelegate(IntPtr addr, int[] registerLoops /*int size*/);
 
-        public static int DynamicAccumulateAtAddress(IntPtr address, uint crcSize)
+        public static ErrorCodes DynamicAccumulateAtAddress(IntPtr address, uint crcSize, out int crcValue)
         {
+            crcValue = default;
             Dictionary<Registers, int> requiredRegisters = new()
             {
                 { Registers.RAX, 1 },
@@ -98,13 +99,6 @@ namespace CRC32
                 }
 
             }
-
-
-
-
-            int eightRemain = (int)crcSize % 8;
-            int eightMultiple = (int)crcSize / 8;
-
             #region crcepilogue
             crcInstructions.Add(0xC3);  //ret
             #endregion
@@ -112,13 +106,20 @@ namespace CRC32
             byte[] assembly = crcInstructions.ToArray();
 
             IntPtr allocLoc = Memoryapi.VirtualAlloc(IntPtr.Zero, (uint)assembly.Length, Winnt.AllocationType.MEM_COMMIT, Winnt.MemoryProtection.PAGE_EXECUTE_READWRITE);
-            Memoryapi.WriteProcessMemory(Process.GetCurrentProcess().Handle, allocLoc, assembly, assembly.Length, out IntPtr _);
+            try
+            {
+                Memoryapi.WriteProcessMemory(Process.GetCurrentProcess().Handle, allocLoc, assembly, assembly.Length, out IntPtr _);
+            }
+            catch
+            {
+                return ErrorCodes.WRITEPROCESSMEMORY_FAILED;
+            }
 
-
-            Console.WriteLine($"LocDB: {allocLoc:X}");
+#if DEBUG
+            Console.WriteLine($"CRC Check Location: {allocLoc:X}");
             Console.Read();
-     
-            int result = ((crcFunctionDelegate)Marshal.GetDelegateForFunctionPointer
+#endif
+            crcValue = ((crcFunctionDelegate)Marshal.GetDelegateForFunctionPointer
             (
                 allocLoc, 
                 typeof(crcFunctionDelegate))
@@ -134,9 +135,10 @@ namespace CRC32
                 }
             );
 
-            bool testme = Memoryapi.VirtualFree(allocLoc, 0, 0x00004000); //MEM_DECOMMIT - LAZY! fix.
+            if(!Memoryapi.VirtualFree(allocLoc, 0, 0x00004000))
+                return ErrorCodes.VIRTUALFREE_FAILED; //MEM_DECOMMIT - LAZY! fix.
 
-            return result;
+            return ErrorCodes.NO_ERROR;
         }
         private static Dictionary<Registers, int> CalculatorRegisterCount(int x)
         {
@@ -198,12 +200,19 @@ namespace CRC32
                 return registerCount;
             }
         }
-        enum Registers
+        private enum Registers
         {
             RAX,
             EAX,
             AX,
             AL
+        }
+        public enum ErrorCodes
+        {
+            NO_ERROR,
+            CRC_SIZE_TOO_SMALL,
+            VIRTUALFREE_FAILED,
+            WRITEPROCESSMEMORY_FAILED,
         }
     }
 }
