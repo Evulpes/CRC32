@@ -10,7 +10,8 @@ namespace CRC32
         delegate int crcFunctionDelegate(IntPtr addr, int[] registerLoops /*int size*/);
 
         /// <summary>
-        /// 
+        /// Creates and executes a CRC32 check dynamically. Memory is immediately erased post check.
+        /// This is more secure, but induces more overhead.
         /// </summary>
         /// <param name="address">The initial starting address for the CRC32 check.</param>
         /// <param name="crcSize">The length of the check. Must be greater than 0.</param>
@@ -143,6 +144,9 @@ namespace CRC32
                     requiredRegisters[Registers.AL] 
                 }
             );
+
+            //Zero the memory out, as VirtualFree doesn't guarantee this.
+            Wdm.ZeroMemory(allocLoc, (IntPtr)assembly.Length);
 
             if(!Memoryapi.VirtualFree(allocLoc, 0, 0x00004000))
                 return ErrorCodes.VIRTUALFREE_FAILED; //MEM_DECOMMIT - LAZY! fix.

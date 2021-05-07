@@ -40,6 +40,11 @@ namespace CRC32
             public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
 
         }
+        protected static class Wdm
+        {
+            [DllImport("Kernel32.dll", EntryPoint = "RtlZeroMemory", SetLastError = false)]
+            public static extern void ZeroMemory(IntPtr dest, IntPtr size);
+        }
         protected static class Winnt
         {
             public enum AllocationType
