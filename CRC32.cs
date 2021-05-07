@@ -11,12 +11,12 @@ namespace CRC32
 
         public static int AccumulateAtAddress(IntPtr address, uint crcSize)
         {
-            Dictionary<string, int> requiredRegisters = new()
+            Dictionary<Registers, int> requiredRegisters = new()
             {
-                { "RAX", 1 },
-                { "EAX", 0 },
-                { "AX", 0 },
-                { "AL", 0 },
+                { Registers.RAX, 1 },
+                { Registers.EAX, 0 },
+                { Registers.AX, 0 },
+                { Registers.AL, 0 },
             };
             #region crcprologue
             List<byte> crcInstructions = new ()
@@ -27,7 +27,7 @@ namespace CRC32
             if (crcSize != 8)
             {
                 requiredRegisters = CalculatorRegisterCount((int)crcSize);
-                if (requiredRegisters["RAX"] != 0)
+                if (requiredRegisters[Registers.RAX] != 0)
                 {
 
                     crcInstructions.AddRange
@@ -45,7 +45,7 @@ namespace CRC32
                     );
 
                 }
-                if (requiredRegisters["EAX"] != 0)
+                if (requiredRegisters[Registers.EAX] != 0)
                 {
                     crcInstructions.AddRange
                     (
@@ -61,7 +61,7 @@ namespace CRC32
                         }
                     );
                 }
-                if (requiredRegisters["AX"] != 0)
+                if (requiredRegisters[Registers.AX] != 0)
                 {
                     crcInstructions.AddRange
                     (
@@ -77,7 +77,7 @@ namespace CRC32
                         }
                     );
                 }
-                if (requiredRegisters["AL"] != 0)
+                if (requiredRegisters[Registers.AL] != 0)
                 {
                     crcInstructions.AddRange
                     (
@@ -124,10 +124,10 @@ namespace CRC32
                 address, 
                 new int[] 
                 { 
-                    requiredRegisters["RAX"], 
-                    requiredRegisters["EAX"], 
-                    requiredRegisters["AX"], 
-                    requiredRegisters["AL"] 
+                    requiredRegisters[Registers.RAX], 
+                    requiredRegisters[Registers.EAX], 
+                    requiredRegisters[Registers.AX], 
+                    requiredRegisters[Registers.AL] 
                 }
             );
 
@@ -135,15 +135,15 @@ namespace CRC32
 
             return result;
         }
-        private static Dictionary<string, int> CalculatorRegisterCount(int x)
+        private static Dictionary<Registers, int> CalculatorRegisterCount(int x)
         {
             List<byte> combinations = new();
-            Dictionary<string, int> registerCount = new()
+            Dictionary<Registers, int> registerCount = new()
             {
-                { "RAX", 0 },
-                { "EAX", 0 },
-                { "AX", 0},
-                { "AL", 0}
+                { Registers.RAX, 0 },
+                { Registers.EAX, 0 },
+                { Registers.AX, 0},
+                { Registers.AL, 0}
             };
             byte[] values = new byte[]
             {
@@ -151,7 +151,7 @@ namespace CRC32
             };
             return RecursiveRegisterAccumulator(x, out _);
 
-            Dictionary<string, int> RecursiveRegisterAccumulator(int x, out int i)
+            Dictionary<Registers, int> RecursiveRegisterAccumulator(int x, out int i)
             {
                 for (i = 0; i < values.Length; i++)
                 {
@@ -166,22 +166,22 @@ namespace CRC32
                         switch (values[i])
                         {
                             case 8:
-                                registerCount["RAX"] += multiple;
+                                registerCount[Registers.RAX] += multiple;
                                 break;
                             case 4:
-                                registerCount["EAX"] += multiple;
+                                registerCount[Registers.EAX] += multiple;
                                 break;
                             case 2:
-                                registerCount["AX"] += multiple;
+                                registerCount[Registers.AX] += multiple;
                                 break;
                             case 1:
-                                registerCount["AL"] += multiple;
+                                registerCount[Registers.AL] += multiple;
                                 break;
                         }
                     }
 
                     if (remain == 1 && multiple == 0)
-                        registerCount["AL"]++;
+                        registerCount[Registers.AL]++;
                     else if (remain >= 1)
                         RecursiveRegisterAccumulator(remain, out i);
                     
@@ -194,6 +194,13 @@ namespace CRC32
                 }
                 return registerCount;
             }
+        }
+        enum Registers
+        {
+            RAX,
+            EAX,
+            AX,
+            AL
         }
     }
 }
