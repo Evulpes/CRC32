@@ -13,7 +13,7 @@ namespace CRC32
         {
             IntPtr hKernelbase = Libloaderapi.GetModuleHandleA("KERNELBASE.dll");
             IntPtr isDebuggerPresentAddr = Libloaderapi.GetProcAddress(hKernelbase, "IsDebuggerPresent");
-
+            int initialCrcCheckValue = default;
             int c = 1;
             while (true)
             {
@@ -21,7 +21,17 @@ namespace CRC32
                 ErrorCodes crcVal = DynamicAccumulateAtAddress(isDebuggerPresentAddr, 0xD, out int crcValue);
                 if (crcVal != NO_ERROR)
                     Console.WriteLine($"{c}: CRC Check Failed for {isDebuggerPresentAddr}. Error Codes: {crcVal} (LastError: {Marshal.GetLastWin32Error()}");
-                
+
+                if (initialCrcCheckValue == default)
+                    initialCrcCheckValue = crcValue;
+                else if (initialCrcCheckValue != crcValue)
+                {
+                    Console.WriteLine("Memory change detected.");
+                    Environment.Exit(-1);
+                }
+
+
+
                 Console.WriteLine($"{c}: {crcValue} (IDP: {isDebuggerPresentAddr:X})");
                 //Console.ReadLine();
                 c++;
