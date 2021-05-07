@@ -9,6 +9,13 @@ namespace CRC32
     {
         delegate int crcFunctionDelegate(IntPtr addr, int[] registerLoops /*int size*/);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="address">The initial starting address for the CRC32 check.</param>
+        /// <param name="crcSize">The length of the check. Must be greater than 0.</param>
+        /// <param name="crcValue">The produced value of the CRC32 check.</param>
+        /// <returns></returns>
         public static ErrorCodes DynamicAccumulateAtAddress(IntPtr address, uint crcSize, out int crcValue)
         {
             crcValue = default;
@@ -28,9 +35,11 @@ namespace CRC32
             if (crcSize != 8)
             {
                 requiredRegisters = CalculatorRegisterCount((int)crcSize);
+
+                //Caclulate assembly loops based on total register count required.
+                //RCX = p1:address, RDX = p2:register counter.
                 if (requiredRegisters[Registers.RAX] != 0)
                 {
-
                     crcInstructions.AddRange
                     (
                         new byte[] 
@@ -97,9 +106,9 @@ namespace CRC32
                         }
                     );
                 }
-
             }
             #region crcepilogue
+            //RAX will contain CRC value.
             crcInstructions.Add(0xC3);  //ret
             #endregion
 
