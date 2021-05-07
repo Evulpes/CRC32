@@ -16,7 +16,7 @@ namespace CRC32
             while (true)
             {
 
-                int crcVal = CRC32.AccumulateAtAddress(isDebuggerPresentAddr, 1);
+                int crcVal = CRC32.DynamicAccumulateAtAddress(isDebuggerPresentAddr, 1);
 
                 Console.WriteLine($"{c}: {crcVal} (IDP: {isDebuggerPresentAddr:X})");
                 Console.ReadLine();

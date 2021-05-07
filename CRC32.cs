@@ -9,7 +9,7 @@ namespace CRC32
     {
         delegate int crcFunctionDelegate(IntPtr addr, int[] registerLoops /*int size*/);
 
-        public static int AccumulateAtAddress(IntPtr address, uint crcSize)
+        public static int DynamicAccumulateAtAddress(IntPtr address, uint crcSize)
         {
             Dictionary<Registers, int> requiredRegisters = new()
             {
