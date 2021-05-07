@@ -27,19 +27,24 @@ namespace CRC32
             if (crcSize != 8)
             {
                 requiredRegisters = CalculatorRegisterCount((int)crcSize);
-                crcInstructions.AddRange
-                (
-                    new byte[] 
-                    { 
-                        0x44, 0x8b, 0x0a,                   //mov r9d, [rdx]
-                        0x4c, 0x8b, 0x19,                   //mov r11 [rcx]
-                        0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
-                        0x48, 0x83, 0xc1, 0x08,             //add rcx, 8
-                        0x49, 0xff, 0xc9,                   //dec r9
-                        0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
-                        0x75, 0xea                          //jne -0x14
-                    } 
-                );
+                if (requiredRegisters["RAX"] != 0)
+                {
+
+                    crcInstructions.AddRange
+                    (
+                        new byte[] 
+                        { 
+                            0x44, 0x8b, 0x0a,                   //mov r9d, [rdx]
+                            0x4c, 0x8b, 0x19,                   //mov r11 [rcx]
+                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
+                            0x48, 0x83, 0xc1, 0x08,             //add rcx, 8
+                            0x49, 0xff, 0xc9,                   //dec r9
+                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
+                            0x75, 0xea                          //jne -0x14
+                        } 
+                    );
+
+                }
                 if (requiredRegisters["EAX"] != 0)
                 {
                     crcInstructions.AddRange
@@ -62,7 +67,7 @@ namespace CRC32
                     (
                         new byte[]
                         {
-                            0x44, 0x8b, 0x4a, 0x04,             //mov r9d, [rdx+4]
+                            0x44, 0x8b, 0x4a, 0x08,             //mov r9d, [rdx+8]
                             0x66, 0x44, 0x8b, 0x19,             //mov r11w, [rcx]
                             0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
                             0x48, 0x83, 0xc1, 0x02,             //add rcx, 2
@@ -78,7 +83,7 @@ namespace CRC32
                     (
                         new byte[]
                         {
-                            0x44, 0x8b, 0x4a, 0x04,             //mov r9d, [rdx+4]
+                            0x44, 0x8b, 0x4a, 0x0C,             //mov r9d, [rdx+0x12]
                             0x44, 0x8a, 0x19,                   //mov r11b, [rcx]
                             0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
                             0x48, 0xff, 0xc1,                   //inc rcx
