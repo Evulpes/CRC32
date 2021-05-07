@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Collections.Generic;
+using static CRC32.CRC32;
+using static CRC32.CRC32;
 namespace CRC32
 {
     class Program : NativeMethods

@@ -52,12 +52,13 @@ namespace CRC32
                         new byte[]
                         {
                             0x44, 0x8b, 0x4a, 0x04,             //mov r9d, [rdx+4]
+                            0x4d, 0x31, 0xdb,                   //xor r11, r11
                             0x44, 0x8b, 0x19,                   //mov r11d [rcx]
                             0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
                             0x48, 0x83, 0xc1, 0x04,             //add rcx, 4
                             0x49, 0xff, 0xc9,                   //dec r9
                             0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
-                            0x75, 0xea                          //jne -0x14
+                            0x75, 0xeb                          //jne -0x14
                         }
                     );
                 }
@@ -68,12 +69,13 @@ namespace CRC32
                         new byte[]
                         {
                             0x44, 0x8b, 0x4a, 0x08,             //mov r9d, [rdx+8]
+                            0x4d, 0x31, 0xdb,                   //xor r11, r11
                             0x66, 0x44, 0x8b, 0x19,             //mov r11w, [rcx]
                             0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
                             0x48, 0x83, 0xc1, 0x02,             //add rcx, 2
                             0x49, 0xff, 0xc9,                   //dec r9
                             0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
-                            0x75, 0xea                          //jne -0x14
+                            0x75, 0xeb                          //jne -0x13
                         }
                     );
                 }
@@ -84,12 +86,13 @@ namespace CRC32
                         new byte[]
                         {
                             0x44, 0x8b, 0x4a, 0x0C,             //mov r9d, [rdx+0x12]
+                            0x4d, 0x31, 0xdb,                   //xor r11, r11
                             0x44, 0x8a, 0x19,                   //mov r11b, [rcx]
                             0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
                             0x48, 0xff, 0xc1,                   //inc rcx
                             0x49, 0xff, 0xc9,                   //dec r9
                             0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
-                            0x75, 0xea                          //jne -0x14
+                            0x75, 0xeb                          //jne -0x13
                         }
                     );
                 }
