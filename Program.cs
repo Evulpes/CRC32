@@ -18,7 +18,7 @@ namespace CRC32
             while (true)
             {
 
-                ErrorCodes crcVal = DynamicAccumulateAtAddress(isDebuggerPresentAddr, 0xD, out int crcValue);
+                ErrorCodes crcVal = DynamicAccumulateAtAddress(isDebuggerPresentAddr, 14, out int crcValue);
                 if (crcVal != NO_ERROR)
                     Console.WriteLine($"{c}: CRC Check Failed for {isDebuggerPresentAddr}. Error Codes: {crcVal} (LastError: {Marshal.GetLastWin32Error()}");
 

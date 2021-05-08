@@ -27,96 +27,13 @@ namespace CRC32
                 { Registers.AX, 0 },
                 { Registers.AL, 0 },
             };
-            #region crcprologue
-            List<byte> crcInstructions = new ()
-            {
-                0x48, 0x31, 0xc0    //xor rax, rax
-            };
-            #endregion
+
             if (crcSize != 8)
-            {
                 requiredRegisters = CalculatorRegisterCount((int)crcSize);
 
-                //Caclulate assembly loops based on total register count required.
-                //RCX = p1:address, RDX = p2:register counter.
-                if (requiredRegisters[Registers.RAX] != 0)
-                {
-                    crcInstructions.AddRange
-                    (
-                        new byte[] 
-                        { 
-                            0x44, 0x8b, 0x0a,                   //mov r9d, [rdx]
-                            0x4c, 0x8b, 0x19,                   //mov r11 [rcx]
-                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
-                            0x48, 0x83, 0xc1, 0x08,             //add rcx, 8
-                            0x49, 0xff, 0xc9,                   //dec r9
-                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
-                            0x75, 0xea                          //jne -0x14
-                        } 
-                    );
-
-                }
-                if (requiredRegisters[Registers.EAX] != 0)
-                {
-                    crcInstructions.AddRange
-                    (
-                        new byte[]
-                        {
-                            0x44, 0x8b, 0x4a, 0x04,             //mov r9d, [rdx+4]
-                            0x4d, 0x31, 0xdb,                   //xor r11, r11
-                            0x44, 0x8b, 0x19,                   //mov r11d [rcx]
-                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
-                            0x48, 0x83, 0xc1, 0x04,             //add rcx, 4
-                            0x49, 0xff, 0xc9,                   //dec r9
-                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
-                            0x75, 0xeb                          //jne -0x14
-                        }
-                    );
-                }
-                if (requiredRegisters[Registers.AX] != 0)
-                {
-                    crcInstructions.AddRange
-                    (
-                        new byte[]
-                        {
-                            0x44, 0x8b, 0x4a, 0x08,             //mov r9d, [rdx+8]
-                            0x4d, 0x31, 0xdb,                   //xor r11, r11
-                            0x66, 0x44, 0x8b, 0x19,             //mov r11w, [rcx]
-                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
-                            0x48, 0x83, 0xc1, 0x02,             //add rcx, 2
-                            0x49, 0xff, 0xc9,                   //dec r9
-                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
-                            0x75, 0xeb                          //jne -0x13
-                        }
-                    );
-                }
-                if (requiredRegisters[Registers.AL] != 0)
-                {
-                    crcInstructions.AddRange
-                    (
-                        new byte[]
-                        {
-                            0x44, 0x8b, 0x4a, 0x0C,             //mov r9d, [rdx+0x12]
-                            0x4d, 0x31, 0xdb,                   //xor r11, r11
-                            0x44, 0x8a, 0x19,                   //mov r11b, [rcx]
-                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
-                            0x48, 0xff, 0xc1,                   //inc rcx
-                            0x49, 0xff, 0xc9,                   //dec r9
-                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
-                            0x75, 0xeb                          //jne -0x13
-                        }
-                    );
-                }
-            }
-            #region crcepilogue
-            //RAX will contain CRC value.
-            crcInstructions.Add(0xC3);  //ret
-            #endregion
-
-            byte[] assembly = crcInstructions.ToArray();
-
+            byte[] assembly = GenerateAssembly(requiredRegisters);
             IntPtr allocLoc = Memoryapi.VirtualAlloc(IntPtr.Zero, (uint)assembly.Length, Winnt.AllocationType.MEM_COMMIT, Winnt.MemoryProtection.PAGE_EXECUTE_READWRITE);
-            
+
             try
             {
                 Memoryapi.WriteProcessMemory(Process.GetCurrentProcess().Handle, allocLoc, assembly, assembly.Length, out IntPtr _);
@@ -132,24 +49,24 @@ namespace CRC32
 #endif
             crcValue = ((crcFunctionDelegate)Marshal.GetDelegateForFunctionPointer
             (
-                allocLoc, 
+                allocLoc,
                 typeof(crcFunctionDelegate))
             )
             (
-                address, 
-                new int[] 
-                { 
-                    requiredRegisters[Registers.RAX], 
-                    requiredRegisters[Registers.EAX], 
-                    requiredRegisters[Registers.AX], 
-                    requiredRegisters[Registers.AL] 
+                address,
+                new int[]
+                {
+                    requiredRegisters[Registers.RAX],
+                    requiredRegisters[Registers.EAX],
+                    requiredRegisters[Registers.AX],
+                    requiredRegisters[Registers.AL]
                 }
             );
 
             //Zero the memory out, as VirtualFree doesn't guarantee this.
             Wdm.ZeroMemory(allocLoc, (IntPtr)assembly.Length);
 
-            if(!Memoryapi.VirtualFree(allocLoc, 0, 0x00008000))
+            if (!Memoryapi.VirtualFree(allocLoc, 0, 0x00008000))
                 return ErrorCodes.VIRTUALFREE_FAILED; //MEM_RELEASE - LAZY! fix.
 
             return ErrorCodes.NO_ERROR;
@@ -161,8 +78,8 @@ namespace CRC32
             {
                 { Registers.RAX, 0 },
                 { Registers.EAX, 0 },
-                { Registers.AX, 0},
-                { Registers.AL, 0}
+                { Registers.AX, 0 },
+                { Registers.AL, 0 }
             };
             byte[] values = new byte[]
             {
@@ -203,7 +120,7 @@ namespace CRC32
                         registerCount[Registers.AL]++;
                     else if (remain >= 1)
                         RecursiveRegisterAccumulator(remain, out i);
-                    
+
                     if (remain == 0)
                     {
                         i = 4;
@@ -214,7 +131,91 @@ namespace CRC32
                 return registerCount;
             }
         }
-        private enum Registers
+        private static byte[] GenerateAssembly(Dictionary<Registers, int> registers)
+        {
+            List<byte> crcInstructions = new()
+            {
+                0x48,
+                0x31,
+                0xc0    //xor rax, rax
+            };
+            if (registers[Registers.RAX] != 0)
+            {
+                crcInstructions.AddRange
+                (
+                    new byte[]
+                    {
+                            0x44, 0x8b, 0x0a,                   //mov r9d, [rdx]
+                            0x4c, 0x8b, 0x19,                   //mov r11 [rcx]
+                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
+                            0x48, 0x83, 0xc1, 0x08,             //add rcx, 8
+                            0x49, 0xff, 0xc9,                   //dec r9
+                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
+                            0x75, 0xea                          //jne -0x14
+                    }
+                );
+
+            }
+            if (registers[Registers.EAX] != 0)
+            {
+                crcInstructions.AddRange
+                (
+                    new byte[]
+                    {
+                            0x44, 0x8b, 0x4a, 0x04,             //mov r9d, [rdx+4]
+                            0x4d, 0x31, 0xdb,                   //xor r11, r11
+                            0x44, 0x8b, 0x19,                   //mov r11d [rcx]
+                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
+                            0x48, 0x83, 0xc1, 0x04,             //add rcx, 4
+                            0x49, 0xff, 0xc9,                   //dec r9
+                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
+                            0x75, 0xeb                          //jne -0x14
+                    }
+                );
+            }
+            if (registers[Registers.AX] != 0)
+            {
+                crcInstructions.AddRange
+                (
+                    new byte[]
+                    {
+                            0x44, 0x8b, 0x4a, 0x08,             //mov r9d, [rdx+8]
+                            0x4d, 0x31, 0xdb,                   //xor r11, r11
+                            0x66, 0x44, 0x8b, 0x19,             //mov r11w, [rcx]
+                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
+                            0x48, 0x83, 0xc1, 0x02,             //add rcx, 2
+                            0x49, 0xff, 0xc9,                   //dec r9
+                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
+                            0x75, 0xeb                          //jne -0x13
+                    }
+                );
+            }
+            if (registers[Registers.AL] != 0)
+            {
+                crcInstructions.AddRange
+                (
+                    new byte[]
+                    {
+                            0x44, 0x8b, 0x4a, 0x0C,             //mov r9d, [rdx+0x12]
+                            0x4d, 0x31, 0xdb,                   //xor r11, r11
+                            0x44, 0x8a, 0x19,                   //mov r11b, [rcx]
+                            0xf2, 0x49, 0x0f, 0x38, 0xf1, 0xc3, //crc rax, r11
+                            0x48, 0xff, 0xc1,                   //inc rcx
+                            0x49, 0xff, 0xc9,                   //dec r9
+                            0x49, 0x83, 0xf9, 0x00,             //cmp r9, 0
+                            0x75, 0xeb                          //jne -0x13
+                    }
+                );
+            }
+
+            #region crcepilogue
+            //RAX will contain CRC value.
+            crcInstructions.Add(0xC3);  //ret
+            #endregion
+
+            return crcInstructions.ToArray();
+        }
+    private enum Registers
         {
             RAX,
             EAX,
