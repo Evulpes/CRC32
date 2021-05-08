@@ -10,40 +10,40 @@ namespace CRC32
         protected static class Libloaderapi
         {
             [DllImport("kernel32", CharSet = CharSet.Ansi)]
-            public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+            internal static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
 
             [DllImport("kernel32", SetLastError = true)]
-            public static extern IntPtr GetModuleHandleA(string lpModuleName);
+            internal static extern IntPtr GetModuleHandleA(string lpModuleName);
         }
         protected static class Debugapi
         {
             [DllImport("kernel32", SetLastError = true)]
-            public static extern bool IsDebuggerPresent();
+            internal static extern bool IsDebuggerPresent();
         }
         protected static class Processthreadsapi
         {
             [DllImport("kernel32", SetLastError = true)]
-            public static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
+            internal static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
             
             [DllImport("Kernel32", SetLastError = true)]
-            public static extern bool GetExitCodeProcess(IntPtr hProcess, out IntPtr lpExitCode);
+            internal static extern bool GetExitCodeProcess(IntPtr hProcess, out IntPtr lpExitCode);
         }
         protected static class Memoryapi
         {
             [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-            public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, Winnt.AllocationType flAllocationType, Winnt.MemoryProtection flProtect);
+            internal static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, Winnt.AllocationType flAllocationType, Winnt.MemoryProtection flProtect);
 
             [DllImport("kernel32.dll", SetLastError = true)]
-            public static extern bool VirtualFree(IntPtr lpAddress, int size, int dwFreeType);
+            internal static extern bool VirtualFree(IntPtr lpAddress, int size, int dwFreeType);
 
             [DllImport("kernel32.dll", SetLastError = true)]
-            public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
+            internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
 
         }
         protected static class Wdm
         {
             [DllImport("Kernel32.dll", EntryPoint = "RtlZeroMemory", SetLastError = false)]
-            public static extern void ZeroMemory(IntPtr dest, IntPtr size);
+            internal static extern void ZeroMemory(IntPtr dest, IntPtr size);
         }
         protected static class Winnt
         {
