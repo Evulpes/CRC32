@@ -8,6 +8,8 @@ namespace CRC32
     class CRC32 : NativeMethods
     {
         delegate int crcFunctionDelegate(IntPtr addr, int[] registerLoops /*int size*/);
+        static readonly Dictionary<int, CRC_Data> staticCRCInfo = new();
+        static int staticCrcIndex = 0;
 
         /// <summary>
         /// Creates and executes a CRC32 check dynamically. Memory is immediately erased post check.
@@ -20,6 +22,9 @@ namespace CRC32
         public static ErrorCodes DynamicAccumulateAtAddress(IntPtr address, uint crcSize, out int crcValue)
         {
             crcValue = default;
+            if (crcSize < 8)
+                return ErrorCodes.CRC_SIZE_TOO_SMALL;
+
             Dictionary<Registers, int> requiredRegisters = new()
             {
                 { Registers.RAX, 1 },
@@ -44,7 +49,7 @@ namespace CRC32
             }
 
 #if DEBUG
-            Console.WriteLine($"CRC Check Location: {allocLoc:X}");
+            Console.WriteLine($"Dynamic CRC Check Location: {allocLoc:X}");
             //Console.Read();
 #endif
             crcValue = ((crcFunctionDelegate)Marshal.GetDelegateForFunctionPointer
@@ -69,6 +74,99 @@ namespace CRC32
             if (!Memoryapi.VirtualFree(allocLoc, 0, 0x00008000))
                 return ErrorCodes.VIRTUALFREE_FAILED; //MEM_RELEASE - LAZY! fix.
 
+            return ErrorCodes.NO_ERROR;
+        }
+        public static ErrorCodes CreateStaticAccumulateAtAddress(IntPtr address, uint crcSize, out int crcId)
+        {
+            
+            crcId = default;
+            if (crcSize < 8)
+                return ErrorCodes.CRC_SIZE_TOO_SMALL;
+
+            Dictionary<Registers, int> requiredRegisters = new()
+            {
+                { Registers.RAX, 1 },
+                { Registers.EAX, 0 },
+                { Registers.AX, 0 },
+                { Registers.AL, 0 },
+            };
+
+            if (crcSize != 8)
+                requiredRegisters = CalculatorRegisterCount((int)crcSize);
+
+            byte[] assembly = GenerateAssembly(requiredRegisters);
+            IntPtr allocLoc = Memoryapi.VirtualAlloc(IntPtr.Zero, (uint)assembly.Length, Winnt.AllocationType.MEM_COMMIT, Winnt.MemoryProtection.PAGE_EXECUTE_READWRITE);
+
+            try
+            {
+                Memoryapi.WriteProcessMemory(Process.GetCurrentProcess().Handle, allocLoc, assembly, assembly.Length, out IntPtr _);
+            }
+            catch
+            {
+                return ErrorCodes.WRITEPROCESSMEMORY_FAILED;
+            }
+
+#if DEBUG
+            Console.WriteLine($"Static CRC Check Location: {allocLoc:X}");
+            //Console.Read();
+#endif
+            if (staticCrcIndex == int.MaxValue)
+                return ErrorCodes.TOO_MANY_STATIC_CRCS;
+            
+            staticCRCInfo.Add
+            (
+                staticCrcIndex, 
+                new CRC_Data 
+                {
+                    startAddress = allocLoc, 
+                    addressToCrc=address, 
+                    size = (int)crcSize, 
+                    requiredRegisters = requiredRegisters 
+                }
+            );
+
+            crcId = staticCrcIndex;
+            staticCrcIndex++;
+
+            return ErrorCodes.NO_ERROR;
+        }
+        public static ErrorCodes DeleteStaticCrc(int crcId)
+        {
+            if (!staticCRCInfo.ContainsKey(crcId))
+                return ErrorCodes.STATIC_CRC_NOT_FOUND;
+
+            Wdm.ZeroMemory(staticCRCInfo[crcId].startAddress, (IntPtr)staticCRCInfo[crcId].size);
+
+            if (!Memoryapi.VirtualFree(staticCRCInfo[crcId].startAddress, 0, 0x00008000))
+            {
+                staticCRCInfo.Remove(crcId);
+                return ErrorCodes.VIRTUALFREE_FAILED; //MEM_RELEASE - LAZY! fix.
+            }
+            staticCRCInfo.Remove(crcId);
+            return ErrorCodes.NO_ERROR;
+        }
+        public static ErrorCodes RunStaticCrc(int crcId, out int crcValue)
+        {
+            crcValue = default;
+
+            if (!staticCRCInfo.ContainsKey(crcId))
+                return ErrorCodes.STATIC_CRC_NOT_FOUND;
+
+            crcValue = ((crcFunctionDelegate)Marshal.GetDelegateForFunctionPointer
+            (
+                staticCRCInfo[crcId].startAddress,
+                typeof(crcFunctionDelegate))
+            )
+            (
+                staticCRCInfo[crcId].addressToCrc,
+                new int[]
+                {
+                    staticCRCInfo[crcId].requiredRegisters[Registers.RAX],
+                    staticCRCInfo[crcId].requiredRegisters[Registers.EAX],
+                    staticCRCInfo[crcId].requiredRegisters[Registers.AX],
+                    staticCRCInfo[crcId].requiredRegisters[Registers.AL]
+                }
+            );
             return ErrorCodes.NO_ERROR;
         }
         private static Dictionary<Registers, int> CalculatorRegisterCount(int x)
@@ -215,7 +313,9 @@ namespace CRC32
 
             return crcInstructions.ToArray();
         }
-    private enum Registers
+        
+
+        private enum Registers
         {
             RAX,
             EAX,
@@ -226,8 +326,17 @@ namespace CRC32
         {
             NO_ERROR,
             CRC_SIZE_TOO_SMALL,
+            STATIC_CRC_NOT_FOUND,
+            TOO_MANY_STATIC_CRCS,
             VIRTUALFREE_FAILED,
             WRITEPROCESSMEMORY_FAILED,
+        }
+        private struct CRC_Data
+        {
+            public IntPtr startAddress;
+            public IntPtr addressToCrc;
+            public int size;
+            public Dictionary<Registers, int> requiredRegisters;
         }
     }
 }

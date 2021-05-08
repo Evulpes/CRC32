@@ -15,6 +15,27 @@ namespace CRC32
             IntPtr isDebuggerPresentAddr = Libloaderapi.GetProcAddress(hKernelbase, "IsDebuggerPresent");
             int initialCrcCheckValue = default;
             int c = 1;
+
+            while (c < 100)
+            {
+                CreateStaticAccumulateAtAddress(isDebuggerPresentAddr, 14, out int crcId);
+                RunStaticCrc(crcId, out int crcValue);
+                if (initialCrcCheckValue == default)
+                    initialCrcCheckValue = crcValue;
+
+                else if (initialCrcCheckValue != crcValue)
+                {
+                    Console.WriteLine("Memory change detected.");
+                    Environment.Exit(-1);
+                }
+                DeleteStaticCrc(crcId);
+                Console.WriteLine($"{c}: {crcValue} (IDP: {isDebuggerPresentAddr:X})");
+                //Console.ReadLine();
+                c++;
+                Thread.Sleep(10);
+            }
+
+
             while (true)
             {
 
@@ -29,8 +50,6 @@ namespace CRC32
                     Console.WriteLine("Memory change detected.");
                     Environment.Exit(-1);
                 }
-
-
 
                 Console.WriteLine($"{c}: {crcValue} (IDP: {isDebuggerPresentAddr:X})");
                 //Console.ReadLine();
